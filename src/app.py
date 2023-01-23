@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, json
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
@@ -37,13 +37,22 @@ def sitemap():
     return generate_sitemap(app)
 
 @app.route('/user', methods=['GET'])
-def handle_hello():
-
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
+def get_all_user():
+    users= User.query.all()
+    users_list = list(map(lambda obj: obj.serialize(), users))
+    response = {
+        "status": "ok",
+        "response": users_list
     }
+    return jsonify(response)
 
-    return jsonify(response_body), 200
+@app.route('/addUser', methods=['POST'])
+def new_user():
+    body = json.loads(request.data)
+    user_model = User(name = body["name"],last_name = body["last_name"],password= body["password"], email= body["email"], suscription_date= body["suscription_date"])
+    db.session.add(user_model)
+    db.session.commit()
+    return jsonify("msj"),200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
